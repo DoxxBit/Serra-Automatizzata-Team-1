@@ -73,5 +73,6 @@ Progetto software per il monitoraggio in tempo reale della temperatura in una se
 ### Installazione
 1. **Clona il repository**:
    ```bash
-   git clone https://github.com/tuo-repo/serra-intelligente.git
-   cd serra-intelligente
+   git clone https://github.com/DoxxBit/Serra-Automatizzata-Team-1.git
+   cd Serra-Automatizzata-Team-1
+
