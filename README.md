@@ -67,9 +67,12 @@ Progetto software per il monitoraggio in tempo reale della temperatura in una se
 
 ## 🚀 Come Iniziare
 ### Prerequisiti
+- MQTT
 - Docker e Docker Compose installati.
-- Python 3.8+.
-
+- Python 3.8+ or Node-Red for sensors simulation data injection
+- Java 21+ for Enterprice back-end
+- React or static Web for fron-end UI
+- 
 ### Installazione
 1. **Clona il repository**:
    ```bash
