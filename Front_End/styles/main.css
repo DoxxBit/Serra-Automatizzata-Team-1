@@ -1,0 +1,35 @@
+:root{
+    /* GLOBAL COLORS */
+    --color-background: hsl(205 33% 10%);
+    --color-background-alt: hsl(204 33% 21%);
+    --color-foreground: hsl(204 33% 100%);
+    --color-border: hsl(204 33% 21%);
+    --color-accent: hsl(143 90% 45%);
+    --color-inLow: hsl(355, 61%, 50%);
+    --font-family: "Space Grotesk", "Noto Sans", sans-serif;
+    --color_title:hsl(204 33% 84%);
+    --color_paragraph: hsl(204 33% 60%);
+
+
+    /* NAVIGATION ROOT COLORS*/ 
+    --nav_background: hsl(204 33% 21%);
+    --nav_button_current: hsl(204 33% 95%);
+    --nav_button_selection: hsl(204 33% 68%);
+}
+
+/* Nascondi scrollbar solo in eventi e contatti */
+.scrollbar-hide{
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+.scrollbar-hide::-webkit-scrollbar{
+  display: none;
+}
+
+html {
+  scroll-behavior: smooth;
+  margin:0;
+  padding: 0;
+  box-sizing: border-box;
+}
