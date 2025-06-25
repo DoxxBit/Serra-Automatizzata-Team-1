@@ -12,6 +12,9 @@
     <title>App Serra #Team 1#</title>
     <link rel="icon" type="image/x-icon" href="data:image/x-icon;base64," />
 
+    <!--Chart js CDN-->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
   </head>
   <body>
@@ -24,20 +27,27 @@
 
         <!-- Header -->
         <div class="flex items-center bg-[#111b22] p-4 pb-2 justify-between">
-          <div class="text-white flex size-12 shrink-0 items-center" data-icon="ArrowLeft" data-size="24px" data-weight="regular">
+          <a href="../home.html" class="text-white flex size-12 shrink-0 items-center" data-icon="ArrowLeft" data-size="24px" data-weight="regular">
             <svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" fill="currentColor" viewBox="0 0 256 256">
               <path d="M224,128a8,8,0,0,1-8,8H59.31l58.35,58.34a8,8,0,0,1-11.32,11.32l-72-72a8,8,0,0,1,0-11.32l72-72a8,8,0,0,1,11.32,11.32L59.31,120H216A8,8,0,0,1,224,128Z"></path>
             </svg>
-          </div>
+          </a>
           <!-- Titolo Sesione history-->
           <h2 class="text-white text-lg font-bold leading-tight tracking-[-0.015em] flex-1 text-center pr-12">History</h2></div>
 
         <!-- Locazione maps GPS Serra-->
         <div class="flex px-4 py-3">
-          <div
-            class="w-full bg-center bg-no-repeat aspect-video bg-cover rounded-lg object-cover"
-            style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuD7FSHjIzCK1PMQasJ_KS0dOBtzdpnHr3_BaSrNyADbh4KB7_ZCqBiXNb3eeHTeiUrblDDpDExvnfZK-jtI-jK57esTYau4PBjAheu6BL_70nToSfk-tydM5A5IOtNnM_SwyWxSbGjty8t422wvF19XOEDIQZ4fG_Ln591Mn0fh64bLCl24m9jcXyMiEPa815R8em6ffY1jqxRJ0sciaEAPzbA3kHbyCjuvSxBEkiCfCVCkCaqBBQ8GWnvRsdShIVmEaszg7NbUty1F");'
-          ></div>
+          <div class="w-full aspect-video rounded-lg overflow-hidden border-2 border-[#243947] shadow-lg">
+            <iframe
+              width="100%"
+              height="100%"
+              style="min-height:180px; border:0;"
+              loading="lazy"
+              allowfullscreen
+              referrerpolicy="no-referrer-when-downgrade"
+              src="https://www.openstreetmap.org/export/embed.html?bbox=17.284726,40.500684,17.304726,40.510684&amp;layer=mapnik&amp;marker=40.505684,17.294726">
+            </iframe>
+          </div>
         </div>
 
 
@@ -52,7 +62,7 @@
           </div>
           <div class="flex flex-col justify-center">
             <p class="text-white text-base font-medium leading-normal line-clamp-1">Temperatura</p>
-            <p class="text-[#93b3c8] text-sm font-normal leading-normal line-clamp-2">22°C</p>
+            <p class="text-[#93b3c8] text-sm font-normal leading-normal line-clamp-2" id="convert-temp">22°C</p>
           </div>
         </div>
 
@@ -61,7 +71,7 @@
         <div class="flex flex-wrap gap-4 px-4 py-6">
           <div class="flex min-w-72 flex-1 flex-col gap-2">
             <p class="text-white text-base font-medium leading-normal">Temperatura</p>
-            <p class="text-white tracking-light text-[32px] font-bold leading-tight truncate">22°C</p>
+            <p class="text-white tracking-light text-[32px] font-bold leading-tight truncate" id="convert-temp">22°C</p>
             <div class="flex gap-1">
               <p class="text-[#93b3c8] text-base font-normal leading-normal">Ultimi 7 Giorni</p>
               <p class="text-[#0bda5b] text-base font-medium leading-normal">+2%</p>
@@ -149,5 +159,6 @@
       </nav>
 
     </main>
+    <script src="../scripts/script.js"></script>
   </body>
 </html>
