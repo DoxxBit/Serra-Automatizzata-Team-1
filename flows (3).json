@@ -1,0 +1,443 @@
+[
+    {
+        "id": "3eac70479d12a46d",
+        "type": "tab",
+        "label": "Simulatore di sensori",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "70f8df7d26bdabad",
+        "type": "inject",
+        "z": "3eac70479d12a46d",
+        "name": "Temperatura",
+        "props": [
+            {
+                "p": "Msg",
+                "v": "",
+                "vt": "date"
+            }
+        ],
+        "repeat": "3",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "x": 120,
+        "y": 360,
+        "wires": [
+            [
+                "c83219f7e69fd4d0"
+            ]
+        ]
+    },
+    {
+        "id": "c83219f7e69fd4d0",
+        "type": "function",
+        "z": "3eac70479d12a46d",
+        "name": "RNG temperatura",
+        "func": "// Definisci i limiti generali per la temperatura\nconst MIN_TEMP_GENERALE = 20;\nconst MAX_TEMP_GENERALE = 35;\nconst MAX_VARIAZIONE = 3; // La temperatura non può cambiare di più di 3 unità\n\n// Per gestire un decimale, lavoriamo con numeri interi 10 volte più grandi\nconst MIN_TEMP_DECIMALE = MIN_TEMP_GENERALE * 10; // 200\nconst MAX_TEMP_DECIMALE = MAX_TEMP_GENERALE * 10; // 350\nconst MAX_VARIAZIONE_DECIMALE = MAX_VARIAZIONE * 10; // 30\n\n// Recupera l'ultima temperatura generata dal contesto del flow (ora come intero moltiplicato per 10)\nlet lastTemperatureDecimale = flow.get('lastTemperatureDecimale');\nif (lastTemperatureDecimale === undefined) {\n    // Se non esiste, usa un valore iniziale sensato (es. metà dell'intervallo)\n    lastTemperatureDecimale = Math.floor((MIN_TEMP_DECIMALE + MAX_TEMP_DECIMALE) / 2);\n}\n\n// Calcola il range di variazione consentito per il prossimo numero decimale\nlet minAllowedDecimale = Math.max(MIN_TEMP_DECIMALE, lastTemperatureDecimale - MAX_VARIAZIONE_DECIMALE);\nlet maxAllowedDecimale = Math.min(MAX_TEMP_DECIMALE, lastTemperatureDecimale + MAX_VARIAZIONE_DECIMALE);\n\n// Assicurati che l'intervallo sia valido\nif (minAllowedDecimale > maxAllowedDecimale) {\n    let temp = minAllowedDecimale;\n    minAllowedDecimale = maxAllowedDecimale;\n    maxAllowedDecimale = temp;\n}\n\n// Genera un nuovo numero casuale intero all'interno del range consentito (moltiplicato per 10)\nlet newTemperatureDecimale = Math.floor(Math.random() * (maxAllowedDecimale - minAllowedDecimale + 1)) + minAllowedDecimale;\n\n// Piccolo aggiustamento per evitare che si incastri se il range è 0\nif (minAllowedDecimale === maxAllowedDecimale) {\n    newTemperatureDecimale = minAllowedDecimale;\n}\n\n// Trasforma il numero intero in decimale dividendo per 10\nlet newTemperature = newTemperatureDecimale / 10;\n\n// Aggiorna l'ultima temperatura (in formato decimale per calcoli futuri) nel contesto del flow\nflow.set('lastTemperatureDecimale', newTemperatureDecimale); // Memorizziamo la versione intera moltiplicata per 10\n\n// Ottieni l'orario corrente in un formato leggibile\nconst now = new Date();\nconst timestamp = now.toLocaleString('it-IT'); // Formato localizzato per l'Italia\n\n// Imposta il payload con la nuova temperatura e l'orario\nmsg.payload = {\n    idSensore: \"1\",\n    temperatura: newTemperature,\n    orario: timestamp\n};\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 310,
+        "y": 360,
+        "wires": [
+            [
+                "7c074df8669bf0d5",
+                "5156f2c75f7ffaf1",
+                "2e0ab75b01f8693d"
+            ]
+        ]
+    },
+    {
+        "id": "7c074df8669bf0d5",
+        "type": "debug",
+        "z": "3eac70479d12a46d",
+        "name": "Debug temperatura",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 510,
+        "y": 360,
+        "wires": []
+    },
+    {
+        "id": "c804a8adcd05fe10",
+        "type": "inject",
+        "z": "3eac70479d12a46d",
+        "name": "Umidità",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "2",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 100,
+        "y": 120,
+        "wires": [
+            [
+                "e21f86dc14d1b769"
+            ]
+        ]
+    },
+    {
+        "id": "e21f86dc14d1b769",
+        "type": "function",
+        "z": "3eac70479d12a46d",
+        "name": "RNG umidità",
+        "func": "// Definisci i limiti generali per l'umidità del terreno (percentuale)\nconst MIN_UMIDITA_TERRENO_GENERALE = 20; // Sotto questo livello, la pianta soffre\nconst MAX_UMIDITA_TERRENO_GENERALE = 95; // Non si satura al 100% per lasciare spazio all'aria\nconst PERDITA_UMIDITA_PER_CICLO = 2; // Quanto scende l'umidità in condizioni normali\nconst AUMENTO_UMIDITA_PER_CICLO = 10; // Quanto sale l'umidità quando si irriga\nconst ID_SENSORE_UMIDITA_TERRENO = 4; // L'ID del sensore che hai richiesto (es. 4)\n\n// Recupera l'ultima umidità del terreno generata dal contesto del flow\nlet lastSoilHumidity = flow.get('lastSoilHumidity');\nif (lastSoilHumidity === undefined) {\n    // Valore iniziale sensato se è la prima esecuzione\n    lastSoilHumidity = Math.floor((MIN_UMIDITA_TERRENO_GENERALE + MAX_UMIDITA_TERRENO_GENERALE) / 2);\n}\n\n// Recupera lo stato del sistema di irrigazione (lo creeremo in seguito)\n// Presupponiamo che una variabile 'irrigazioneAttiva' sia impostata nel contesto del flow\nlet irrigazioneAttiva = flow.get('irrigazioneAttiva') || false;\n\nlet newSoilHumidity;\n\nif (irrigazioneAttiva) {\n    // Se l'irrigazione è attiva, l'umidità sale rapidamente\n    newSoilHumidity = lastSoilHumidity + AUMENTO_UMIDITA_PER_CICLO;\n} else {\n    // Se l'irrigazione è spenta, l'umidità scende gradualmente\n    newSoilHumidity = lastSoilHumidity - PERDITA_UMIDITA_PER_CICLO;\n}\n\n// Applica i limiti generali per l'umidità del terreno\nnewSoilHumidity = Math.max(MIN_UMIDITA_TERRENO_GENERALE, newSoilHumidity);\nnewSoilHumidity = Math.min(MAX_UMIDITA_TERRENO_GENERALE, newSoilHumidity);\n\n// Aggiungi una piccola variazione casuale per un po' di realismo (es. ±1%)\nnewSoilHumidity += (Math.random() * 2 - 1); // Genera un numero tra -1 e 1\nnewSoilHumidity = Math.round(newSoilHumidity); // Arrotonda per avere un intero o pochi decimali se preferisci\n\n// Assicurati che il valore finale sia entro i limiti dopo la variazione casuale e l'arrotondamento\nnewSoilHumidity = Math.max(MIN_UMIDITA_TERRENO_GENERALE, newSoilHumidity);\nnewSoilHumidity = Math.min(MAX_UMIDITA_TERRENO_GENERALE, newSoilHumidity);\n\n// Aggiorna l'ultima umidità nel contesto del flow per il prossimo ciclo\nflow.set('lastSoilHumidity', newSoilHumidity);\n\n// Ottieni l'orario corrente in un formato leggibile\nconst now = new Date();\nconst timestamp = now.toLocaleString('it-IT'); // Formato localizzato per l'Italia\n\n// Imposta il payload con l'ordine e i nomi delle proprietà richiesti\nmsg.payload = {\n    idSensore: \"2\", // Primo: ID del sensore\n    valore: newSoilHumidity,             // Secondo: Il valore di umidità del terreno\n    timestamp: timestamp                 // Terzo: L'orario\n};\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 290,
+        "y": 120,
+        "wires": [
+            [
+                "ee412afba6506c48",
+                "16fcdae29e0aaec0",
+                "2e0ab75b01f8693d"
+            ]
+        ]
+    },
+    {
+        "id": "ee412afba6506c48",
+        "type": "debug",
+        "z": "3eac70479d12a46d",
+        "name": "Debug umidità",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 520,
+        "y": 120,
+        "wires": []
+    },
+    {
+        "id": "b971e2aa673bd623",
+        "type": "inject",
+        "z": "3eac70479d12a46d",
+        "name": "Luxmetro",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "2",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 110,
+        "y": 200,
+        "wires": [
+            [
+                "056bf4cd5974c189"
+            ]
+        ]
+    },
+    {
+        "id": "056bf4cd5974c189",
+        "type": "function",
+        "z": "3eac70479d12a46d",
+        "name": "RNG luminosità",
+        "func": "// Definisci i limiti generali per la luminosità\nconst MIN_LUX_GENERALE = 0;    // Buio totale\nconst MAX_LUX_GENERALE = 60000; // Pieno sole (molto intenso)\n\n// Variazioni massime per simulare nuvole o piccoli sbalzi\nconst MAX_VARIAZIONE_CASUALE = 1000; // Variazione casuale in Lux\n\n// Recupera l'ultima luminosità generata dal contesto del flow\nlet lastLux = flow.get('lastLux');\nif (lastLux === undefined) {\n    lastLux = 0; // Inizia dal buio o un valore realistico per l'ora attuale se preferisci\n}\n\n// Ottieni l'ora corrente (solo l'ora in formato 0-23)\nconst now = new Date();\nconst hour = now.getHours();\n\nlet targetLux; // Il valore di luminosità desiderato per l'ora corrente\n\n// Simula un ciclo giorno/notte basato sull'ora\nif (hour >= 22 || hour < 6) { // Dalle 22:00 alle 05:59 (notte)\n    targetLux = Math.floor(Math.random() * 50); // Buio quasi totale, con qualche variazione minima\n} else if (hour >= 6 && hour < 9) { // Dalle 06:00 alle 08:59 (alba)\n    targetLux = 500 + Math.floor(Math.random() * 3000); // Luminosità crescente\n} else if (hour >= 9 && hour < 17) { // Dalle 09:00 alle 16:59 (pieno giorno)\n    targetLux = 10000 + Math.floor(Math.random() * 50000); // Valori di picco\n} else if (hour >= 17 && hour < 22) { // Dalle 17:00 alle 21:59 (tramonto)\n    targetLux = 100 + Math.floor(Math.random() * 8000); // Luminosità decrescente\n} else {\n    targetLux = 0; // Caso di fallback, dovrebbe essere gestito dai range sopra\n}\n\n// Applica una variazione casuale per simulare le nuvole o fluttuazioni\nlet randomVariation = (Math.random() * MAX_VARIAZIONE_CASUALE * 2) - MAX_VARIAZIONE_CASUALE; // Da -MAX_VARIAZIONE_CASUALE a +MAX_VARIAZIONE_CASUALE\nlet currentLux = targetLux + randomVariation;\n\n// Applica i limiti generali\ncurrentLux = Math.max(MIN_LUX_GENERALE, currentLux);\ncurrentLux = Math.min(MAX_LUX_GENERALE, currentLux);\n\n// Per rendere la variazione più graduale e meno \"a scatti\", possiamo mediare con l'ultimo valore.\n// Puoi regolare il fattore di smoothing (es. 0.2 per 20% del nuovo valore, 80% del vecchio)\nconst SMOOTHING_FACTOR = 0.3; // Quanto velocemente la luce si adatta al \"target\"\nlet newLux = lastLux * (1 - SMOOTHING_FACTOR) + currentLux * SMOOTHING_FACTOR;\nnewLux = Math.round(newLux); // Arrotonda al numero intero più vicino\n\n// Assicurati che non superi i limiti generali dopo lo smoothing\nnewLux = Math.max(MIN_LUX_GENERALE, newLux);\nnewLux = Math.min(MAX_LUX_GENERALE, newLux);\n\n// Aggiorna l'ultima luminosità nel contesto del flow per il prossimo ciclo\nflow.set('lastLux', newLux);\n\n// Ottieni l'orario corrente in un formato leggibile\nconst timestamp = now.toLocaleString('it-IT');\n\n// Imposta il payload con la nuova luminosità e l'orario\nmsg.payload = {\n    idSensore: \"3\",\n    luminosita: newLux, // Questo è il tuo \"valore\"\n    orario: timestamp   // Questo è il tuo \"timestamp\"\n};\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 300,
+        "y": 200,
+        "wires": [
+            [
+                "e4382f54de8a3493",
+                "89eaade21922a28e",
+                "2e0ab75b01f8693d"
+            ]
+        ]
+    },
+    {
+        "id": "e4382f54de8a3493",
+        "type": "debug",
+        "z": "3eac70479d12a46d",
+        "name": "debug luminosità",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 510,
+        "y": 200,
+        "wires": []
+    },
+    {
+        "id": "dff40e15c9bc0574",
+        "type": "inject",
+        "z": "3eac70479d12a46d",
+        "name": "Presenza",
+        "props": [
+            {
+                "p": "topic",
+                "v": "true",
+                "vt": "bool"
+            }
+        ],
+        "repeat": "25",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "x": 110,
+        "y": 280,
+        "wires": [
+            [
+                "dd5f570d916bb7fd"
+            ]
+        ]
+    },
+    {
+        "id": "dd5f570d916bb7fd",
+        "type": "function",
+        "z": "3eac70479d12a46d",
+        "name": "Simula presenza",
+        "func": "// Definisci l'ID del sensore di presenza\nconst ID_SENSORE_PRESENZA = 5; // ID arbitrario, puoi cambiarlo\n\n// Probabilità che venga rilevata una presenza (es. 20% di possibilità ad ogni ciclo)\n// Puoi modificare questa percentuale per rendere la presenza più o meno frequente\nconst PROBABILITA_PRESENZA = 0.20; // 20%\n\n// Ottieni l'orario corrente in un formato leggibile\nconst now = new Date();\nconst timestamp = now.toLocaleString('it-IT');\n\nlet presenzaRilevata;\n\n// Genera un numero casuale tra 0 e 1\n// Se il numero è inferiore alla PROBABILITA_PRESENZA, allora c'è una rilevazione\nif (Math.random() < PROBABILITA_PRESENZA) {\n    presenzaRilevata = true; // Rilevata presenza\n} else {\n    presenzaRilevata = false; // Nessuna presenza\n}\n\n// Imposta il payload con l'ordine e i nomi delle proprietà richiesti\nmsg.payload = {\n    idSensore: \"4\", // ID del sensore\n    valore: presenzaRilevata,      // true/false per la presenza\n    timestamp: timestamp           // L'orario della rilevazione\n};\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 310,
+        "y": 280,
+        "wires": [
+            [
+                "33f5c26acda3228e",
+                "ac016f9d56897e3f",
+                "2e0ab75b01f8693d"
+            ]
+        ]
+    },
+    {
+        "id": "33f5c26acda3228e",
+        "type": "debug",
+        "z": "3eac70479d12a46d",
+        "name": "Debug presenza",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 520,
+        "y": 280,
+        "wires": []
+    },
+    {
+        "id": "6d4ebb29e5081233",
+        "type": "inject",
+        "z": "3eac70479d12a46d",
+        "name": "CO2",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "1",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 90,
+        "y": 40,
+        "wires": [
+            [
+                "26547a4b351ab7e7"
+            ]
+        ]
+    },
+    {
+        "id": "26547a4b351ab7e7",
+        "type": "function",
+        "z": "3eac70479d12a46d",
+        "name": "Simula CO2",
+        "func": "// Definisci i limiti generali per la CO2 in parti per milione (ppm)\nconst MIN_CO2_GENERALE = 380;  // Livello minimo simile all'aria esterna\nconst MAX_CO2_GENERALE = 1500; // Livello massimo per l'arricchimento\n\n// Variazioni per la simulazione\nconst CO2_CONSUMO_GIORNO = 20; // Quanto CO2 viene consumata di giorno dalle piante per ciclo\nconst CO2_PRODUZIONE_NOTTE = 10; // Quanto CO2 viene prodotta/accumulata di notte per ciclo\nconst MAX_VARIAZIONE_CASUALE = 30; // Variazione casuale per fluttuazioni\n\nconst ID_SENSORE_CO2 = 6; // L'ID del sensore CO2 (es. 6)\n\n// Recupera l'ultima CO2 generata dal contesto del flow\nlet lastCO2 = flow.get('lastCO2');\nif (lastCO2 === undefined) {\n    lastCO2 = 400; // Valore iniziale tipico dell'aria esterna\n}\n\n// Ottieni l'ora corrente per distinguere giorno/notte\nconst now = new Date();\nconst hour = now.getHours();\n\nlet newCO2 = lastCO2; // Inizializza con l'ultimo valore\n\n// Logica di consumo/produzione in base all'ora (giorno/notte)\nif (hour >= 6 && hour < 20) { // Orario diurno (es. 06:00 - 19:59)\n    // Consumo di CO2 per fotosintesi\n    newCO2 -= CO2_CONSUMO_GIORNO;\n    // Se in futuro implementeremo ventilazione, qui potremmo aggiungere:\n    // if (flow.get('ventilazioneAttiva')) { newCO2 = Math.max(newCO2, 400); } // Porta verso valori esterni\n    // Se in futuro implementeremo iniezione CO2:\n    // if (flow.get('co2IniezioneAttiva')) { newCO2 += CO2_INIEZIONE_RATE; }\n} else { // Orario notturno (es. 20:00 - 05:59)\n    // Produzione/accumulo di CO2\n    newCO2 += CO2_PRODUZIONE_NOTTE;\n}\n\n// Aggiungi una variazione casuale per rendere il valore meno prevedibile\nnewCO2 += (Math.random() * MAX_VARIAZIONE_CASUALE * 2) - MAX_VARIAZIONE_CASUALE; // Variazione tra -MAX_VARIAZIONE_CASUALE e +MAX_VARIAZIONE_CASUALE\n\n// Applica i limiti generali\nnewCO2 = Math.max(MIN_CO2_GENERALE, newCO2);\nnewCO2 = Math.min(MAX_CO2_GENERALE, newCO2);\n\n// Arrotonda per avere numeri interi\nnewCO2 = Math.round(newCO2);\n\n// Aggiorna l'ultimo valore di CO2 nel contesto del flow\nflow.set('lastCO2', newCO2);\n\n// Ottieni l'orario corrente in un formato leggibile\nconst timestamp = now.toLocaleString('it-IT');\n\n// Imposta il payload con l'ordine e i nomi delle proprietà richiesti\nmsg.payload = {\n    idSensore: \"5\", // ID del sensore\n    valore: newCO2,            // Il valore della CO2\n    timestamp: timestamp       // L'orario\n};\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 290,
+        "y": 40,
+        "wires": [
+            [
+                "f525ceb4252a8652",
+                "fac0456d2e657877",
+                "2e0ab75b01f8693d"
+            ]
+        ]
+    },
+    {
+        "id": "f525ceb4252a8652",
+        "type": "debug",
+        "z": "3eac70479d12a46d",
+        "name": "Debug CO2",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 530,
+        "y": 40,
+        "wires": []
+    },
+    {
+        "id": "5156f2c75f7ffaf1",
+        "type": "postgresql",
+        "z": "3eac70479d12a46d",
+        "name": "",
+        "query": "CREATE TABLE sensore temperatura (\n    id SERIAL PRIMARY KEY,\n    nome_sensore VARCHAR(50) NOT NULL,\n    valore NUMERIC(10, 2), \n    timestamp_lettura TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP\n);",
+        "postgreSQLConfig": "",
+        "split": false,
+        "rowsPerMsg": 1,
+        "outputs": 1,
+        "x": 530,
+        "y": 400,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "ac016f9d56897e3f",
+        "type": "postgresql",
+        "z": "3eac70479d12a46d",
+        "name": "",
+        "query": "CREATE TABLE sensore di presenza (\n    id SERIAL PRIMARY KEY,\n    nome_sensore VARCHAR(50) NOT NULL,\n    valore NUMERIC(10, 2), -- Potrebbe essere 0 o 1 per la presenza\n    timestamp_lettura TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP\n);",
+        "postgreSQLConfig": "",
+        "split": false,
+        "rowsPerMsg": 1,
+        "outputs": 1,
+        "x": 530,
+        "y": 320,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "89eaade21922a28e",
+        "type": "postgresql",
+        "z": "3eac70479d12a46d",
+        "name": "",
+        "query": "CREATE TABLE luxmetro (\n    id SERIAL PRIMARY KEY,\n    nome_sensore VARCHAR(50) NOT NULL,\n    valore NUMERIC(10, 2),\n    timestamp_lettura TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP\n);",
+        "postgreSQLConfig": "",
+        "split": false,
+        "rowsPerMsg": 1,
+        "outputs": 1,
+        "x": 530,
+        "y": 240,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "16fcdae29e0aaec0",
+        "type": "postgresql",
+        "z": "3eac70479d12a46d",
+        "name": "",
+        "query": "CREATE TABLE sensore umidità (\n    id SERIAL PRIMARY KEY,\n    nome_sensore VARCHAR(50) NOT NULL,\n    valore NUMERIC(10, 2),\n    timestamp_lettura TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP\n);",
+        "postgreSQLConfig": "",
+        "split": false,
+        "rowsPerMsg": 1,
+        "outputs": 1,
+        "x": 530,
+        "y": 160,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "fac0456d2e657877",
+        "type": "postgresql",
+        "z": "3eac70479d12a46d",
+        "name": "",
+        "query": "CREATE TABLE letture_co2 (\n    id SERIAL PRIMARY KEY,\n    id_sensore VARCHAR(100) NOT NULL, -- \n    valore_ppm INTEGER NOT NULL,      -- Valore del CO2 in parti per milione\n    timestamp_lettura TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP\n);\n\n-- Creiamo anche un indice per velocizzare le ricerche per sensore e tempo\nCREATE INDEX idx_letture_co2_sensore_tempo ON letture_co2 (id_sensore, timestamp_lettura DESC);",
+        "postgreSQLConfig": "",
+        "split": false,
+        "rowsPerMsg": 1,
+        "outputs": 1,
+        "x": 530,
+        "y": 80,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "2e0ab75b01f8693d",
+        "type": "websocket out",
+        "z": "3eac70479d12a46d",
+        "name": "WS out",
+        "server": "7b0d60584c285db4",
+        "client": "",
+        "x": 860,
+        "y": 200,
+        "wires": [],
+        "info": "[\r\n    {\r\n        \"id\": \"2e0ab75b01f8693d\",\r\n        \"type\": \"websocket out\",\r\n        \"z\": \"3eac70479d12a46d\",\r\n        \"name\": \"WS out\",\r\n        \"server\": \"7b0d60584c285db4\",\r\n        \"client\": \"\",\r\n        \"x\": 100,\r\n        \"y\": 400,\r\n        \"wires\": []\r\n    },\r\n    {\r\n        \"id\": \"7b0d60584c285db4\",\r\n        \"type\": \"websocket-listener\",\r\n        \"path\": \"/ws/sensori\", \r\n        \"wholemsg\": \"false\"    <-- OPZIONALE: Se vuoi solo il payload\r\n    }\r\n]"
+    },
+    {
+        "id": "0c7c85f1e58545fe",
+        "type": "websocket in",
+        "z": "3eac70479d12a46d",
+        "name": "",
+        "server": "7b0d60584c285db4",
+        "client": "",
+        "x": 910,
+        "y": 140,
+        "wires": [
+            [
+                "2e0ab75b01f8693d"
+            ]
+        ]
+    },
+    {
+        "id": "7b0d60584c285db4",
+        "type": "websocket-listener",
+        "path": "ws://localhost:8765",
+        "wholemsg": "true"
+    }
+]
