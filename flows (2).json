@@ -1,0 +1,18 @@
+[
+    {
+        "id": "5156f2c75f7ffaf1",
+        "type": "postgresql",
+        "z": "3eac70479d12a46d",
+        "name": "",
+        "query": "CREATE TABLE sensore temperatura (\n    id SERIAL PRIMARY KEY,\n    nome_sensore VARCHAR(50) NOT NULL,\n    valore NUMERIC(10, 2), \n    timestamp_lettura TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP\n);",
+        "postgreSQLConfig": "",
+        "split": false,
+        "rowsPerMsg": 1,
+        "outputs": 1,
+        "x": 530,
+        "y": 400,
+        "wires": [
+            []
+        ]
+    }
+]
